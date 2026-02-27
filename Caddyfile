@@ -1,0 +1,30 @@
+http://corepetitustask.local {
+    # 1. Root Directory (Symfony public folder)
+    root * /var/www/public
+
+    # 2. Advanced PHP-FPM Processing
+    php_fastcgi corepetitustask-app:9000 {
+        header_down -X-Powered-By
+    }
+
+    # 3. Static Assets Optimization
+    @static {
+        file
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.webp
+    }
+    header @static Cache-Control "public, max-age=31536000, must-revalidate"
+
+    # 4. Modern Compression
+    encode zstd gzip
+
+    # 5. Security Headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # 6. Final File Server
+    file_server
+}

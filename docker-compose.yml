@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: corepetitustask-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - ./src:/var/www
+    networks:
+      - corepetitus-net
+
+  webserver:
+    image: caddy:2-alpine
+    container_name: corepetitustask-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./src:/var/www
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - corepetitus-net
+
+  db:
+    image: mariadb:11.8
+    container_name: corepetitustask-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - corepetitus-net
+
+networks:
+  corepetitus-net:
+    driver: bridge
+
+volumes:
+  dbdata:
+  caddy_data:
+  caddy_config:
