@@ -1,4 +1,4 @@
-http://corepetitustask.local {
+:80 {
     # 1. Root Directory (Symfony public folder)
     root * /var/www/public
 

@@ -1,0 +1,30 @@
+<table class="people-table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Location Types</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for person in people %}
+        <tr>
+            <td>{{ person.id }}</td>
+            <td>{{ person.firstName }} {{ person.surName }}</td>
+            <td>
+                <ul>
+                    {% for location in person.locations %}
+                        <li>{{ location.locationType.name }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<style>
+    .people-table { width: 100%; border-collapse: collapse; }
+    .people-table th, .people-table td { border: 1px solid #eee; padding: 12px; text-align: left; }
+    .people-table th { background: #f9f9f9; }
+</style>

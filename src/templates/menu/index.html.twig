@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Menu{% endblock %}
+
+{% macro render_menu(items) %}
+    {% import _self as macros %}
+    <ul class="menu-level">
+        {% for item in items %}
+            <li class="menu-item">
+                <span class="menu-name">{{ item.name }}</span>
+
+                {% if item.children is not empty %}
+                    {{ macros.render_menu(item.children) }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% block body %}
+    <div class="container">
+        <h1>Project Menu</h1>
+        <nav class="menu-wrapper">
+            {% import _self as macros %}
+
+            {{ macros.render_menu(menu_items) }}
+        </nav>
+    </div>
+
+    <style>
+        .container { font-family: sans-serif; padding: 20px; }
+        .menu-wrapper { background: #f9f9f9; padding: 20px; border-radius: 8px; }
+
+        .menu-level {
+            list-style-type: none;
+            padding-left: 20px;
+            border-left: 1px dashed #ccc;
+        }
+        .menu-wrapper > .menu-level {
+            padding-left: 0;
+            border-left: none;
+        }
+
+        .menu-item { margin: 8px 0; }
+        .menu-name {
+            font-weight: 500;
+            color: #333;
+            display: inline-block;
+            padding: 2px 5px;
+        }
+
+        .menu-item::before {
+            content: "•";
+            color: #007bff;
+            margin-right: 8px;
+        }
+    </style>
+{% endblock %}

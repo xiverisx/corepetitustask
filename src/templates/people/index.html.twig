@@ -1,0 +1,324 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Manage People{% endblock %}
+
+{% block body %}
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="container">
+        <h1>Person Management</h1>
+
+        {# Form Section #}
+        <div class="form-card">
+            <form id="person-form" novalidate>
+                <input type="hidden" id="person-id" value="">
+
+                <div class="section">
+                    <h3 id="form-title">Create Person</h3>
+                    <div class="input-row">
+                        <div class="field-group">
+                            <input type="text" id="firstName" placeholder="First Name" required>
+                        </div>
+                        <div class="field-group">
+                            <input type="text" id="surName" placeholder="Surname" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Locations</h3>
+                    <div id="locations-list">
+                        {{ _self.location_row(locationTypes) }}
+                    </div>
+                    <button type="button" id="btn-add-location" class="btn-outline">+ Add Location</button>
+                </div>
+
+                <div class="form-footer">
+                    <button type="button" id="btn-cancel" class="btn-secondary" style="display:none;">Cancel Edit</button>
+                    <button type="submit" class="btn-primary" id="btn-submit">Save Person</button>
+                </div>
+            </form>
+        </div>
+
+        {# Table Section #}
+        <div class="list-card">
+            <h2>People & Locations</h2>
+            <div id="table-container">
+                <table class="people-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Locations</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for person in people %}
+                        <tr data-id="{{ person.id }}" data-person='{{ _self.json_person(person) }}'>
+                            <td>{{ person.id }}</td>
+                            <td>{{ person.firstName }} {{ person.surName }}</td>
+                            <td>
+                                <ul class="location-list">
+                                    {% for location in person.locations %}
+                                        <li><strong>{{ location.locationType.name }}:</strong> {{ location.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td>
+                                <button class="btn-edit" onclick="PeopleManager.edit(this)">Edit</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <template id="location-row-template">
+        {{ _self.location_row(locationTypes) }}
+    </template>
+
+    {# CSS #}
+    <style>
+        .container { max-width: 900px; margin: 40px auto; font-family: 'Segoe UI', sans-serif; color: #333; }
+        .form-card, .list-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.08); margin-bottom: 30px; border: 1px solid #eee; }
+        .section h3 { border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px; color: #555; }
+        .input-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-start; }
+        .field-group { flex: 1; display: flex; flex-direction: column; }
+        .input-row input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        .location-entry { display: flex; gap: 10px; margin-bottom: 12px; padding: 12px; background: #fcfcfc; border: 1px solid #f0f0f0; border-radius: 6px; align-items: flex-start; }
+        .location-entry .field-group-inner { flex: 2; display: flex; flex-direction: column; }
+        .location-entry input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .location-entry select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: white; height: 38px; }
+        .btn-remove { background: #ff4757; color: #fff; border: none; width: 38px; height: 38px; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+        .btn-outline { background: #fff; border: 1px dashed #007bff; color: #007bff; padding: 12px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .btn-primary { background: #2f3542; color: #fff; border: none; padding: 12px 40px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        .btn-secondary { background: #ced4da; color: #333; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; margin-right: 10px; }
+        .btn-edit { background: #007bff; color: #fff; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+        .people-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .people-table th, .people-table td { text-align: left; padding: 15px; border-bottom: 1px solid #eee; }
+        .people-table th { background: #f8f9fa; color: #666; font-size: 13px; text-transform: uppercase; }
+        .location-list { padding-left: 20px; margin: 0; }
+
+        /* Error Styles */
+        .error-input { border-color: #ff4757 !important; background-color: #fffafb; }
+        .error-message { color: #ff4757; font-size: 12px; margin-top: 4px; font-weight: 500; }
+
+        /* Toast Styles */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: #2ed573; color: white; padding: 15px 25px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-bottom: 10px;
+            animation: slideIn 0.3s ease-out forwards; font-weight: 600; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.fade-out { animation: slideOut 0.3s ease-in forwards; }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    </style>
+
+    {# Javascript #}
+    <script>
+        const PeopleManager = {
+            form: document.getElementById('person-form'),
+            locList: document.getElementById('locations-list'),
+            personIdInput: document.getElementById('person-id'),
+            btnCancel: document.getElementById('btn-cancel'),
+            tableBody: document.querySelector('.people-table tbody'),
+            template: document.getElementById('location-row-template'),
+            toastContainer: document.getElementById('toast-container'),
+
+            init() {
+                document.getElementById('btn-add-location').addEventListener('click', () => this.addRow());
+                this.btnCancel.addEventListener('click', () => this.resetForm());
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+            },
+
+            showToast(message) {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerText = message;
+                this.toastContainer.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.classList.add('fade-out');
+                    toast.addEventListener('animationend', () => toast.remove());
+                }, 3000);
+            },
+
+            addRow() {
+                const clone = this.template.content.cloneNode(true);
+                this.locList.appendChild(clone);
+            },
+
+            removeRow(btn) {
+                if (this.locList.children.length > 1) {
+                    btn.closest('.location-entry').remove();
+                } else {
+                    btn.closest('.location-entry').querySelector('.loc-name').value = '';
+                }
+            },
+
+            edit(btn) {
+                this.clearErrors();
+                const data = JSON.parse(btn.closest('tr').dataset.person);
+                this.personIdInput.value = data.id;
+                document.getElementById('firstName').value = data.firstName;
+                document.getElementById('surName').value = data.surName;
+                document.getElementById('form-title').innerText = 'Update Person (ID: ' + data.id + ')';
+                this.btnCancel.style.display = 'inline-block';
+
+                this.locList.innerHTML = '';
+                data.locations.forEach(loc => {
+                    this.addRow();
+                    const lastRow = this.locList.lastElementChild;
+                    lastRow.querySelector('.loc-name').value = loc.name;
+                    lastRow.querySelector('.loc-type').value = loc.typeId;
+                });
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+
+            resetForm() {
+                this.clearErrors();
+                this.form.reset();
+                this.personIdInput.value = '';
+                document.getElementById('form-title').innerText = 'Create Person';
+                this.btnCancel.style.display = 'none';
+                this.locList.innerHTML = '';
+                this.addRow();
+            },
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                this.clearErrors();
+
+                const isUpdate = !!this.personIdInput.value;
+                const payload = {
+                    id: this.personIdInput.value,
+                    firstName: document.getElementById('firstName').value.trim(),
+                    surName: document.getElementById('surName').value.trim(),
+                    locations: Array.from(document.querySelectorAll('.location-entry')).map(el => ({
+                        name: el.querySelector('.loc-name').value.trim(),
+                        typeId: el.querySelector('.loc-type').value
+                    }))
+                };
+
+                try {
+                    const response = await fetch('{{ path('app_people_save') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.status === 422) {
+                        this.applyErrors(result.violations);
+                        return;
+                    }
+
+                    if (result.success) {
+                        this.updateTable(result.person);
+                        this.resetForm();
+                        this.showToast(isUpdate ? 'Person updated successfully!' : 'Person added successfully!');
+                    }
+                } catch (err) {
+                    console.error('Save failed', err);
+                }
+            },
+
+            applyErrors(violations) {
+                violations.forEach(v => {
+                    let element;
+                    if (document.getElementById(v.propertyPath)) {
+                        element = document.getElementById(v.propertyPath);
+                    } else if (v.propertyPath.includes('locations')) {
+                        const match = v.propertyPath.match(/locations\[(\d+)\]\.(\w+)/);
+                        if (match) {
+                            const index = match[1];
+                            const field = match[2];
+                            const row = this.locList.children[index];
+                            if (row) {
+                                element = field === 'name' ? row.querySelector('.loc-name') : row.querySelector('.loc-type');
+                            }
+                        }
+                    }
+
+                    if (element) {
+                        element.classList.add('error-input');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.innerText = v.title;
+                        element.parentNode.appendChild(errorDiv);
+                    }
+                });
+            },
+
+            clearErrors() {
+                document.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
+                document.querySelectorAll('.error-message').forEach(el => el.remove());
+            },
+
+            updateTable(p) {
+                const locsHtml = p.locations.map(l =>
+                    '<li><strong>' + l.type + ':</strong> ' + l.name + '</li>'
+                ).join('');
+
+                const rowData = {
+                    id: p.id,
+                    firstName: p.firstName,
+                    surName: p.surName,
+                    locations: p.locations.map(l => ({ name: l.name, typeId: l.typeId }))
+                };
+
+                const html =
+                    '<td>' + p.id + '</td>' +
+                    '<td>' + p.firstName + ' ' + p.surName + '</td>' +
+                    '<td><ul class="location-list">' + locsHtml + '</ul></td>' +
+                    '<td><button class="btn-edit" onclick="PeopleManager.edit(this)">Edit</button></td>';
+
+                const existingRow = document.querySelector('tr[data-id="' + p.id + '"]');
+
+                if (existingRow) {
+                    existingRow.setAttribute('data-person', JSON.stringify(rowData));
+                    existingRow.innerHTML = html;
+                } else {
+                    const newRow = document.createElement('tr');
+                    newRow.setAttribute('data-id', p.id);
+                    newRow.setAttribute('data-person', JSON.stringify(rowData));
+                    newRow.innerHTML = html;
+                    this.tableBody.appendChild(newRow);
+                }
+            }
+        };
+
+        PeopleManager.init();
+        window.removeRow = (btn) => PeopleManager.removeRow(btn);
+    </script>
+
+    {# Helper Macros #}
+    {% macro location_row(types) %}
+        <div class="location-entry">
+            <div class="field-group-inner">
+                <input type="text" class="loc-name" placeholder="Location Name" required>
+            </div>
+            <select class="loc-type">
+                {% for type in types %}
+                    <option value="{{ type.id }}">{{ type.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button" class="btn-remove" onclick="removeRow(this)">×</button>
+        </div>
+    {% endmacro %}
+
+    {% macro json_person(p) %}
+        {{ {
+            id: p.id,
+            firstName: p.firstName,
+            surName: p.surName,
+            locations: p.locations|map(l => {name: l.name, typeId: l.locationType.id})
+        }|json_encode|raw }}
+    {% endmacro %}
+{% endblock %}
