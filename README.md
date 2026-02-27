@@ -13,9 +13,13 @@ docker-compose up -d --build
 ### 4. Install Dependencies
 docker exec corepetitustask-app composer install
 
-### 5. Database Setup
+### 5.1. Database Setup
 docker exec corepetitustask-app php bin/console doctrine:database:create --if-not-exists
+
+### 5.2. Database Setup
 docker exec corepetitustask-app php bin/console doctrine:migrations:migrate --no-interaction
+
+### 5.3. Database Setup
 docker exec corepetitustask-app php bin/console doctrine:fixtures:load --no-interaction
 
 ### 6. App endpoints
