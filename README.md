@@ -1,4 +1,3 @@
-cat << 'EOF' > README.md
 ## Installation & Setup
 
 ### 1. Clone the Repository
@@ -22,4 +21,3 @@ docker exec corepetitustask-app php bin/console doctrine:fixtures:load --no-inte
 ### 6. App endpoints
 - Menu Navigation: http://localhost:8080/
 - People Management: http://localhost:8080/people
-EOF
